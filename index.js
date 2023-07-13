@@ -87,21 +87,53 @@ async function run() {
   })
 
   //  post api 
-app.post('/post', async(req,res)=>{
-   const body=req.body;
-  const result =await PostCollection.insertOne(body);
-   res.send(result)
-})
-app.get('/post', async (rea,res)=>{
-   const result =await PostCollection.find().toArray();
-   res.send(result)
-})
-app.delete('/post/:id', async (req,res)=>{
-  const id=req.params.id;
-  const query={_id: new ObjectId(id)};
-   const result =await PostCollection.deleteOne(query);
-   res.send(result)
-})
+  app.post('/post', async (req, res) => {
+    const body = req.body;
+    const result = await PostCollection.insertOne(body);
+    res.send(result)
+  })
+  app.get('/post', async (rea, res) => {
+    const result = await PostCollection.find().toArray();
+    res.send(result)
+  })
+
+  app.delete('/post/:id', verifyJWT, async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await PostCollection.deleteOne(query);
+    res.send(result);
+
+  })
+  app.patch('/post/:id', verifyJWT, async (req, res) => {
+    const UpdateData = req.body;
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const CountLink = UpdateData.LikeUser;
+    const likeEmailer = UpdateData.likeEmail;
+    const updateDoc = {
+      $set: {
+        like: UpdateData.like + 1,
+        likeEmail: [...likeEmailer, CountLink]
+      }
+    };
+    const result = await PostCollection.updateOne(filter, updateDoc);
+    res.send(result)
+  })
+  app.patch('/postComment/:id', verifyJWT, async (req, res) => {
+    const UpdateData = req.body;
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const CommentUser = UpdateData.CommentData;
+    const comment = UpdateData.comment;
+    const updateDoc = {
+      $set: {
+        comment: [...comment, CommentUser]
+      }
+    };
+    const result = await PostCollection.updateOne(filter, updateDoc);
+    res.send(result)
+  })
+
 
   await client.db("admin").command({ ping: 1 });
   console.log("Pinged your deployment. You successfully connected to MongoDB!");
