@@ -69,12 +69,28 @@ async function run() {
     const result = await StoryCollection.insertOne(body);
     res.send(result)
   })
+
   app.post('/users', async (req, res) => {
     const body = req.body;
     console.log(body);
     const result = await UsersCollection.insertOne(body);
     res.send(result)
   })
+  app.patch('/users/:id', async (req, res) => {
+    const UpdateData = req.body;
+    const Id = req.params.id;
+    const filter = { _id: new ObjectId(Id) };
+
+    console.log(UpdateData);
+    const updateDoc = {
+      $set: {
+        Cover: UpdateData.CoverPhoto
+      }
+    };
+    const result = await UsersCollection.updateOne(filter, updateDoc);
+    res.send(result)
+  })
+  
   app.get('/users', async (req, res) => {
     const result = await UsersCollection.find().toArray();
     res.send(result)
@@ -94,6 +110,11 @@ async function run() {
   })
   app.get('/post', async (rea, res) => {
     const result = await PostCollection.find().toArray();
+    res.send(result)
+  })
+  app.get('/postVideo', async (rea, res) => {
+    const query = { video: "" }
+    const result = await PostCollection.find(query).toArray();
     res.send(result)
   })
 
