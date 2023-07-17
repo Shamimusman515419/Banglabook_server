@@ -46,6 +46,7 @@ async function run() {
   const StoryCollection = client.db("Banglabook").collection("Story");
   const UsersCollection = client.db("Banglabook").collection("users");
   const PostCollection = client.db("Banglabook").collection("Post");
+  const MessengerCollection = client.db("Banglabook").collection("Messenger");
 
 
 
@@ -90,7 +91,8 @@ async function run() {
     const result = await UsersCollection.updateOne(filter, updateDoc);
     res.send(result)
   })
-  
+  // users APi 
+
   app.get('/users', async (req, res) => {
     const result = await UsersCollection.find().toArray();
     res.send(result)
@@ -155,6 +157,22 @@ async function run() {
     res.send(result)
   })
 
+  // messenger Api 
+
+  app.post('/messenger', verifyJWT, async (req, res) => {
+    const body = req.body;
+    const data = body?.MessegerData
+    const result = await MessengerCollection.insertOne(data);
+    res.send(result);
+  })
+
+  app.get('/messenger/:email',async (req, res) => {
+    const email = req.params.email;
+    const query = { yourEmail: email };
+    const result = await MessengerCollection.find(query).toArray();
+    res.send(result);
+
+  });
 
   await client.db("admin").command({ ping: 1 });
   console.log("Pinged your deployment. You successfully connected to MongoDB!");
