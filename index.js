@@ -166,7 +166,7 @@ async function run() {
     res.send(result);
   })
 
-  app.get('/messenger/:email',async (req, res) => {
+  app.get('/messenger/:email', async (req, res) => {
     const email = req.params.email;
     const query = { yourEmail: email };
     const result = await MessengerCollection.find(query).toArray();
