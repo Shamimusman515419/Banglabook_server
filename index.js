@@ -77,16 +77,21 @@ async function run() {
     const result = await UsersCollection.insertOne(body);
     res.send(result)
   })
-  app.patch('/users/:id', async (req, res) => {
+  app.patch('/users/:email', async (req, res) => {
     const UpdateData = req.body;
-    const Id = req.params.id;
-    const filter = { _id: new ObjectId(Id) };
+    const email = req.params.email;
+    const filter = { email: email };
+    console.log(filter);
+   
 
     const data = await UsersCollection.findOne(filter)
     const updateDoc = {
       $set: {
         Cover: UpdateData?.CoverPhoto ? UpdateData?.CoverPhoto : data?.Cover,
-        image: UpdateData.image ? UpdateData.image : data?.image
+        image: UpdateData.image ? UpdateData.image : data?.image,
+        boi: UpdateData.boi ? UpdateData.boi : data?.boi,
+        media: UpdateData.media ? UpdateData.media : data?.media,
+        Gender: UpdateData.Gender ? UpdateData.Gender : data?.Gender
       }
     };
     const result = await UsersCollection.updateOne(filter, updateDoc);
