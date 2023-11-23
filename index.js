@@ -82,10 +82,11 @@ async function run() {
     const Id = req.params.id;
     const filter = { _id: new ObjectId(Id) };
 
-    console.log(UpdateData);
+    const data = await UsersCollection.findOne(filter)
     const updateDoc = {
       $set: {
-        Cover: UpdateData.CoverPhoto
+        Cover: UpdateData?.CoverPhoto ? UpdateData?.CoverPhoto : data?.Cover,
+        image: UpdateData.image ? UpdateData.image : data?.image
       }
     };
     const result = await UsersCollection.updateOne(filter, updateDoc);
@@ -104,6 +105,24 @@ async function run() {
     res.send(result)
   })
 
+  app.get('/userId/:id', async (req, res) => {
+    const query = req.params.id;
+
+    const fond = { _id: new ObjectId(query) };
+    const result = await UsersCollection.findOne(fond);
+
+    res.send(result)
+  })
+  app.get('/alluser', async (req, res) => {
+    const query = req.query.name;
+    const result = await UsersCollection.find({
+      "$or": [
+        { name: { $regex: query, $options: 'i' } },
+      ],
+    }).toArray()
+
+    res.send(result)
+  })
   //  post api 
   app.post('/post', async (req, res) => {
     const body = req.body;
