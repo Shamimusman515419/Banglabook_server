@@ -66,14 +66,14 @@ async function run() {
 
   app.post('/story', async (req, res) => {
     const body = req.body;
-    console.log(body);
+
     const result = await StoryCollection.insertOne(body);
     res.send(result)
   })
 
   app.post('/users', async (req, res) => {
     const body = req.body;
-    console.log(body);
+
     const result = await UsersCollection.insertOne(body);
     res.send(result)
   })
@@ -81,8 +81,8 @@ async function run() {
     const UpdateData = req.body;
     const email = req.params.email;
     const filter = { email: email };
-    console.log(filter);
-   
+
+
 
     const data = await UsersCollection.findOne(filter)
     const updateDoc = {
@@ -91,7 +91,8 @@ async function run() {
         image: UpdateData.image ? UpdateData.image : data?.image,
         boi: UpdateData.boi ? UpdateData.boi : data?.boi,
         media: UpdateData.media ? UpdateData.media : data?.media,
-        Gender: UpdateData.Gender ? UpdateData.Gender : data?.Gender
+        Gender: UpdateData.Gender ? UpdateData.Gender : data?.Gender,
+        address: UpdateData.address ? UpdateData.address : data?.address
       }
     };
     const result = await UsersCollection.updateOne(filter, updateDoc);
@@ -99,11 +100,82 @@ async function run() {
   })
   // users APi 
 
+  app.get('/follower', async (req, res) => {
+    const Follower = await UsersCollection.aggregate([
+      {
+        $match: { email: req?.query?.email }
+      }, {
+        $lookup: {
+          from: 'users',
+          localField: 'following',
+          foreignField: 'email',
+          as: 'followingMe'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'followers',
+          foreignField: 'email',
+          as: 'followersMe'
+        }
+      },
+    ]).toArray();
+
+    res.send(Follower)
+
+  })
+
+
+
+  app.post('/follower', async (req, res) => {
+    const data = req.body;
+    const meEmail = data?.me
+    const friendEmail = data?.friend;
+
+    const me = await UsersCollection.findOne({ email: meEmail });
+    const followerMe = me?.following;
+    const friend = await UsersCollection.findOne({ email: friendEmail });
+    const followersFriend = friend?.followers;
+
+    const resultMe = await UsersCollection.updateOne({ email: meEmail }, {
+      $set: {
+        following: followerMe ? [...followerMe, friendEmail] : [friendEmail]
+      }
+    });
+    const resultFriend = await UsersCollection.updateOne({ email: friendEmail }, {
+      $set: {
+        followers: followersFriend ? [...followersFriend, friendEmail] : [friendEmail]
+      }
+    });
+    console.log(resultMe, resultFriend);
+    if (resultMe?.modifiedCount && resultFriend?.modifiedCount) {
+      res.send({ massage: " congratulations  successfully add new friend  " })
+    }
+  })
+  app.patch('/follower', verifyJWT, async (req, res) => {
+    const email = req?.query?.email;
+    const data = req.body;
+    const me = await UsersCollection.findOne({ email: email });
+
+    const filteredArray = me?.following.filter(item => item !== data?.email);
+
+
+    const resultMe = await UsersCollection.updateOne({ email: email }, {
+      $set: {
+        following: filteredArray ? filteredArray : me?.following
+      }
+    });
+    console.log(resultMe);
+    res.send(resultMe)
+
+  })
+
   app.get('/users', async (req, res) => {
     const result = await UsersCollection.find().toArray();
     res.send(result)
   })
-  app.get('/user/:email', verifyJWT, async (req, res) => {
+  app.get('/user/:email', async (req, res) => {
     const query = req.params.email;
     const fond = { email: query };
     const result = await UsersCollection.findOne(fond);
@@ -134,8 +206,18 @@ async function run() {
     const result = await PostCollection.insertOne(body);
     res.send(result)
   })
-  app.get('/post', async (rea, res) => {
-    const result = await PostCollection.find().toArray();
+  app.get('/post', async (req, res) => {
+    
+    const result = await PostCollection.aggregate([{
+      $lookup: {
+        from: 'users',
+        localField: 'email',
+        foreignField: 'email',
+        as: 'user'
+      }
+    },]).toArray();
+    console.log(result);
+
     res.send(result)
   })
   app.get('/postVideo', async (rea, res) => {
