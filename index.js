@@ -92,7 +92,8 @@ async function run() {
         boi: UpdateData.boi ? UpdateData.boi : data?.boi,
         media: UpdateData.media ? UpdateData.media : data?.media,
         Gender: UpdateData.Gender ? UpdateData.Gender : data?.Gender,
-        address: UpdateData.address ? UpdateData.address : data?.address
+        address: UpdateData.address ? UpdateData.address : data?.address,
+        collage: UpdateData.collage ? UpdateData.collage : data?.collage
       }
     };
     const result = await UsersCollection.updateOne(filter, updateDoc);
@@ -145,7 +146,7 @@ async function run() {
     });
     const resultFriend = await UsersCollection.updateOne({ email: friendEmail }, {
       $set: {
-        followers: followersFriend ? [...followersFriend, friendEmail] : [friendEmail]
+        followers: followersFriend ? [...followersFriend, friendEmail] : [meEmail]
       }
     });
     console.log(resultMe, resultFriend);
@@ -207,7 +208,7 @@ async function run() {
     res.send(result)
   })
   app.get('/post', async (req, res) => {
-    
+
     const result = await PostCollection.aggregate([{
       $lookup: {
         from: 'users',
@@ -266,16 +267,47 @@ async function run() {
   // messenger Api 
 
   app.post('/messenger', verifyJWT, async (req, res) => {
+
     const body = req.body;
-    const data = body?.MessegerData
+    const data = body?.massageData;
+    console.log(data);
+
     const result = await MessengerCollection.insertOne(data);
     res.send(result);
   })
 
-  app.get('/messenger/:email', async (req, res) => {
-    const email = req.params.email;
-    const query = { yourEmail: email };
-    const result = await MessengerCollection.find(query).toArray();
+  app.get('/messenger/', async (req, res) => {
+    const yourEmail = req?.query?.yourEmail
+    const friendEmail = req?.query?.friendEmail
+
+    console.log(friendEmail, yourEmail);
+    const pipeline = [ {
+        $lookup: {
+          from: 'users',
+          localField: 'friendEmail',
+          foreignField: 'email',
+          as: 'friendData'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'yourEmail',
+          foreignField: 'email',
+          as: 'yourData'
+        }
+      },
+      {
+        $match: {
+          "friendData": { $ne: [] }, // Checking if friendData array is not empty
+          "yourData": { $ne: [] }    // Checking if yourData array is not empty
+        }
+      }
+    ];
+
+
+    const result = await MessengerCollection.aggregate(pipeline ).toArray();
+    console.log(result);
     res.send(result);
 
   });
