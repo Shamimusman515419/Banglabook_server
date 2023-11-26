@@ -71,6 +71,12 @@ async function run() {
     res.send(result)
   })
 
+  app.get('/story/:id', async (req, res) => {
+    const param = req.params?.id;
+    const result = await StoryCollection.findOne({ _id: new ObjectId(param) })
+    res.send(result)
+  })
+
   app.post('/users', async (req, res) => {
     const body = req.body;
 
@@ -276,37 +282,45 @@ async function run() {
     res.send(result);
   })
 
+  app.delete('/messenger/:id', async (req, res) => {
+    const data = req?.params?.id;
+    const result = await MessengerCollection.deleteOne({ _id: new ObjectId(data) });
+    res.send(result)
+
+  });
+
+
   app.get('/messenger/', async (req, res) => {
     const yourEmail = req?.query?.yourEmail
     const friendEmail = req?.query?.friendEmail
 
     console.log(friendEmail, yourEmail);
-    const pipeline = [ {
-        $lookup: {
-          from: 'users',
-          localField: 'friendEmail',
-          foreignField: 'email',
-          as: 'friendData'
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'yourEmail',
-          foreignField: 'email',
-          as: 'yourData'
-        }
-      },
-      {
-        $match: {
-          "friendData": { $ne: [] }, // Checking if friendData array is not empty
-          "yourData": { $ne: [] }    // Checking if yourData array is not empty
-        }
+    const pipeline = [{
+      $lookup: {
+        from: 'users',
+        localField: 'friendEmail',
+        foreignField: 'email',
+        as: 'friendData'
       }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'yourEmail',
+        foreignField: 'email',
+        as: 'yourData'
+      }
+    },
+    {
+      $match: {
+        "friendData": { $ne: [] }, // Checking if friendData array is not empty
+        "yourData": { $ne: [] }    // Checking if yourData array is not empty
+      }
+    }
     ];
 
 
-    const result = await MessengerCollection.aggregate(pipeline ).toArray();
+    const result = await MessengerCollection.aggregate(pipeline).toArray();
     console.log(result);
     res.send(result);
 
