@@ -255,6 +255,28 @@ async function run() {
     const result = await PostCollection.updateOne(filter, updateDoc);
     res.send(result)
   })
+  app.patch('/postEdit/:id', verifyJWT, async (req, res) => {
+    const UpdateData = req.body;
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const description = UpdateData.description;
+    const image = UpdateData.image;
+    const PostItem = UpdateData.PostItem;
+    const video = UpdateData.video;
+    const activity = UpdateData.activity;
+    const postData = await PostCollection.findOne(filter)
+    const updateDoc = {
+      $set: {
+        description: description ? description : postData?.description,
+        image: image ? image : postData?.image,
+        video: video ? video : postData?.video,
+        activity: activity ? activity : postData?.activity,
+        PostItem: PostItem ? PostItem : postData?.PostItem,
+      }
+    };
+    const result = await PostCollection.updateOne(filter, updateDoc);
+    res.send(result)
+  })
   app.patch('/postComment/:id', verifyJWT, async (req, res) => {
     const UpdateData = req.body;
     const id = req.params.id;
